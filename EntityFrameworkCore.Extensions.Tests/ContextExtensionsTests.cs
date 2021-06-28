@@ -16,11 +16,11 @@ namespace EntityFrameworkCore.Extensions.Tests
 
             var employees = employee.Generate(10);
 
-            using (var db = new dbtestContext())
+            using (var context = new dbtestContext())
             {
-                using (var entity = db.Database.BeginTransaction())
+                using (var entity = context.Database.BeginTransaction())
                 {
-                    db.BulkMerge(employees);
+                    context.BulkUpsert(employees);
                     entity.Commit();
                 }
             };

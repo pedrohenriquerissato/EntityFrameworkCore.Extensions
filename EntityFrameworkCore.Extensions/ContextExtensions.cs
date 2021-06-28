@@ -1,22 +1,35 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EntityFrameworkCore.Extensions
 {
     public static class ContextExtensions
     {
-        public static void BulkMerge<T>(this DbContext context, ICollection<T> collection)
+        /// <summary>
+        /// Bulk Upsert extension for EF Core with Pomelo.MySQL connector
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="context"></param>
+        /// <param name="collection"></param>
+        public static void BulkUpsert<T>(this DbContext context, ICollection<T> collection)
         {
-            var entityType = context.Model.FindEntityType(typeof(T));
-            var primaryKeys = entityType.FindPrimaryKey();
+            if (!collection.Any())
+                throw new ArgumentException("Collection can not be empty");
+
+            var type = typeof(T);
+            var entityType = context.Model.FindEntityType(type);
+            var properties = entityType.GetProperties();
 
             var query = string.Empty;
-            for (int i = 0; i < collection.Count; i++)
+            foreach (var item in collection)
             {
-                query = query + string.Concat($"INSERT INTO `{entityType.DisplayName()}` ({})");
+                query += string.Concat($"INSERT INTO `{context.Database.GetDbConnection().Database}`.`{entityType.GetTableName()}` ({string.Join(", ", properties.Select(x => x.GetColumnName()))}) VALUES ({string.Join(", ",  properties.Select(x => "'" + type.GetProperty(x.Name).GetValue(item, null) + "'"))}); ");
             }
+                
 
             context.Database.ExecuteSqlRaw(query);
         }
