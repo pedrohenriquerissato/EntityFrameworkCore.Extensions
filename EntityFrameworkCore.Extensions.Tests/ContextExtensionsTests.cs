@@ -7,7 +7,7 @@ namespace EntityFrameworkCore.Extensions.Tests
     public class ContextExtensionsTests
     {
         [Fact]
-        public void TextExtension()
+        public void BulkUpsert_GetCollectionWithAllTypesPossible_ExecutePerfectInsertion()
         {
             var employee = new Faker<Employee>()
                 .RuleFor(x => x.Dob, r => r.Person.DateOfBirth.Date)
@@ -18,10 +18,10 @@ namespace EntityFrameworkCore.Extensions.Tests
 
             using (var context = new dbtestContext())
             {
-                using (var entity = context.Database.BeginTransaction())
+                using (var transaction = context.Database.BeginTransaction())
                 {
                     context.BulkUpsert(employees);
-                    entity.Commit();
+                    transaction.Commit();
                 }
             };
 

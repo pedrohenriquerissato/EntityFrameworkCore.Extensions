@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +16,7 @@ namespace EntityFrameworkCore.Extensions
         public static void BulkUpsert<T>(this DbContext context, ICollection<T> collection)
         {
             if (!collection.Any())
-                throw new ArgumentException("Collection can not be empty");
+                throw new ArgumentNullException(nameof(collection));
 
             var type = typeof(T);
             var entityType = context.Model.FindEntityType(type);
@@ -27,9 +25,8 @@ namespace EntityFrameworkCore.Extensions
             var query = string.Empty;
             foreach (var item in collection)
             {
-                query += string.Concat($"INSERT INTO `{context.Database.GetDbConnection().Database}`.`{entityType.GetTableName()}` ({string.Join(", ", properties.Select(x => x.GetColumnName()))}) VALUES ({string.Join(", ",  properties.Select(x => "'" + type.GetProperty(x.Name).GetValue(item, null) + "'"))}); ");
+                query += string.Concat($"INSERT INTO `{context.Database.GetDbConnection().Database}`.`{entityType.GetTableName()}` ({string.Join(", ", properties.Select(x => x.GetColumnName()))}) VALUES ({string.Join(", ", properties.Select(x => "'" + type.GetProperty(x.Name).GetValue(item, null) + "'"))}); ");
             }
-                
 
             context.Database.ExecuteSqlRaw(query);
         }
